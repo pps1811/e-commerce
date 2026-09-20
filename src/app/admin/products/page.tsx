@@ -1,9 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { db } from "@/lib/db";
 import { LinkButton } from "@/components/ui/link-button";
-import { Badge } from "@/components/ui/badge";
+import { DeleteProductButton } from "@/components/admin/delete-product-button";
+import { ProductStatusToggle } from "@/components/admin/product-status-toggle";
 import { formatPrice } from "@/lib/format";
 
 export default async function AdminProductsPage() {
@@ -38,6 +39,7 @@ export default async function AdminProductsPage() {
                 <th className="p-3 font-medium">Price</th>
                 <th className="p-3 font-medium">Stock</th>
                 <th className="p-3 font-medium">Status</th>
+                <th className="p-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -68,9 +70,24 @@ export default async function AdminProductsPage() {
                     )}
                   </td>
                   <td className="p-3">
-                    <Badge variant={product.isActive ? "secondary" : "outline"}>
-                      {product.isActive ? "Active" : "Inactive"}
-                    </Badge>
+                    <ProductStatusToggle productId={product.id} isActive={product.isActive} />
+                  </td>
+                  <td className="p-3">
+                    <div className="flex items-center justify-end gap-1">
+                      <LinkButton
+                        href={`/admin/products/${product.id}`}
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Edit ${product.name}`}
+                      >
+                        <Pencil className="size-4" />
+                      </LinkButton>
+                      <DeleteProductButton
+                        productId={product.id}
+                        productName={product.name}
+                        compact
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

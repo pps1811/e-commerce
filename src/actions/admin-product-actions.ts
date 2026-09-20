@@ -3,12 +3,30 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdminAction } from "@/lib/auth-guards";
+import { deleteBlobUrls } from "@/lib/blob";
 import { adminProductSchema, adminCategorySchema } from "@/lib/validations/admin-product";
 
 export interface ActionResult {
   success: boolean;
   error?: string;
   id?: string;
+}
+
+/**
+ * Deletes uploaded files that no remaining product or category still uses
+ * (the same URL could have been pasted into two products).
+ */
+async function removeUnusedBlobs(urls: string[]) {
+  if (urls.length === 0) return;
+  const [stillUsedByProducts, stillUsedByCategories] = await Promise.all([
+    db.productImage.findMany({ where: { url: { in: urls } }, select: { url: true } }),
+    db.category.findMany({ where: { image: { in: urls } }, select: { image: true } }),
+  ]);
+  const inUse = new Set([
+    ...stillUsedByProducts.map((i) => i.url),
+    ...stillUsedByCategories.map((c) => c.image ?? ""),
+  ]);
+  await deleteBlobUrls(urls.filter((url) => !inUse.has(url)));
 }
 
 export async function createProduct(input: unknown): Promise<ActionResult> {
@@ -58,6 +76,11 @@ export async function updateProduct(id: string, input: unknown): Promise<ActionR
 
   const { images, comparePrice, ...rest } = parsed.data;
 
+  const previousImages = await db.productImage.findMany({
+    where: { productId: id },
+    select: { url: true },
+  });
+
   await db.product.update({
     where: { id },
     data: {
@@ -73,7 +96,23 @@ export async function updateProduct(id: string, input: unknown): Promise<ActionR
   revalidatePath("/admin/products");
   revalidatePath("/products");
   revalidatePath(`/products/${parsed.data.slug}`);
+
+  // Images the admin removed or replaced are no longer needed in storage.
+  const keptUrls = new Set(images.map((img) => img.url));
+  await removeUnusedBlobs(previousImages.map((i) => i.url).filter((url) => !keptUrls.has(url)));
+
   return { success: true, id };
+}
+
+export async function setProductStatus(id: string, isActive: boolean): Promise<ActionResult> {
+  await requireAdminAction();
+
+  const product = await db.product.update({ where: { id }, data: { isActive } });
+
+  revalidatePath("/admin/products");
+  revalidatePath("/products");
+  revalidatePath(`/products/${product.slug}`);
+  return { success: true };
 }
 
 export async function deleteProduct(id: string): Promise<ActionResult> {
@@ -89,7 +128,13 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
     return { success: true };
   }
 
+  const images = await db.productImage.findMany({ where: { productId: id }, select: { url: true } });
+
   await db.product.delete({ where: { id } });
+
+  // Product rows are gone, so their uploaded files can go too.
+  await removeUnusedBlobs(images.map((i) => i.url));
+
   revalidatePath("/admin/products");
   revalidatePath("/products");
   return { success: true };

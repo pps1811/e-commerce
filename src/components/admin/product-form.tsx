@@ -242,14 +242,20 @@ export function ProductForm({
         </Button>
       </div>
 
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="status">Status</Label>
+        <select
+          id="status"
+          value={isActive ? "published" : "draft"}
+          onChange={(e) => setValue("isActive", e.target.value === "published")}
+          className="h-9 w-full max-w-xs rounded-md border bg-background px-2 text-sm"
+        >
+          <option value="published">Published — visible in the store</option>
+          <option value="draft">Draft — hidden from customers</option>
+        </select>
+      </div>
+
       <div className="flex flex-wrap gap-6">
-        <label className="flex items-center gap-2 text-sm">
-          <Checkbox
-            checked={isActive}
-            onCheckedChange={(checked) => setValue("isActive", checked === true)}
-          />
-          Active (visible in store)
-        </label>
         <label className="flex items-center gap-2 text-sm">
           <Checkbox
             checked={isNew}
