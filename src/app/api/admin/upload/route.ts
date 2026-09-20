@@ -30,10 +30,16 @@ export async function POST(request: Request) {
   }
 
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-  const blob = await put(`products/${safeName}`, file, {
-    access: "public",
-    addRandomSuffix: true,
-  });
 
-  return NextResponse.json({ url: blob.url });
+  try {
+    const blob = await put(`products/${safeName}`, file, {
+      access: "public",
+      addRandomSuffix: true,
+    });
+    return NextResponse.json({ url: blob.url });
+  } catch (error) {
+    console.error("Blob upload failed", error);
+    const detail = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: `Upload failed: ${detail}` }, { status: 502 });
+  }
 }

@@ -38,8 +38,10 @@ export function ImageUploadInput({
       formData.append("file", file);
 
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error ?? `Upload failed (server error ${res.status})`);
+      }
 
       onChange(data.url);
     } catch (err) {
