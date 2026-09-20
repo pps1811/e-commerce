@@ -8,19 +8,18 @@ import { Input } from "@/components/ui/input";
 interface ImageUploadInputProps {
   value: string;
   onChange: (url: string) => void;
-  cloudinaryConfigured: boolean;
+  uploadEnabled: boolean;
   placeholder?: string;
 }
 
 /**
- * Falls back to a plain URL field when Cloudinary isn't configured, so the
- * admin panel stays usable before those keys exist — matches the same
- * "gate behind config, don't block the UI" pattern as Razorpay checkout.
+ * Falls back to a plain URL field when image storage isn't configured, so
+ * the admin panel stays usable before the Blob store exists.
  */
 export function ImageUploadInput({
   value,
   onChange,
-  cloudinaryConfigured,
+  uploadEnabled,
   placeholder = "Image URL",
 }: ImageUploadInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -35,25 +34,14 @@ export function ImageUploadInput({
     setError(null);
 
     try {
-      const sigRes = await fetch("/api/admin/cloudinary-signature", { method: "POST" });
-      const sigData = await sigRes.json();
-      if (!sigRes.ok) throw new Error(sigData.error ?? "Could not get upload signature");
-
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("api_key", sigData.apiKey);
-      formData.append("timestamp", String(sigData.timestamp));
-      formData.append("signature", sigData.signature);
-      formData.append("folder", sigData.folder);
 
-      const uploadRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`,
-        { method: "POST", body: formData }
-      );
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok) throw new Error(uploadData.error?.message ?? "Upload failed");
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Upload failed");
 
-      onChange(uploadData.secure_url);
+      onChange(data.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -62,7 +50,7 @@ export function ImageUploadInput({
     }
   }
 
-  if (!cloudinaryConfigured) {
+  if (!uploadEnabled) {
     return (
       <Input
         placeholder={placeholder}

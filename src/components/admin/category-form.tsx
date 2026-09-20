@@ -12,10 +12,10 @@ import { createCategory } from "@/actions/admin-product-actions";
 import { ImageUploadInput } from "@/components/admin/image-upload-input";
 
 interface CategoryFormProps {
-  cloudinaryConfigured?: boolean;
+  uploadEnabled?: boolean;
 }
 
-export function CategoryForm({ cloudinaryConfigured = false }: CategoryFormProps) {
+export function CategoryForm({ uploadEnabled = false }: CategoryFormProps) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -66,7 +66,7 @@ export function CategoryForm({ cloudinaryConfigured = false }: CategoryFormProps
             <ImageUploadInput
               value={value ?? ""}
               onChange={onChange}
-              cloudinaryConfigured={cloudinaryConfigured}
+              uploadEnabled={uploadEnabled}
             />
           )}
         />

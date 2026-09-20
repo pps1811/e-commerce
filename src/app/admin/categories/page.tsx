@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { CategoryList } from "@/components/admin/category-list";
 import { CategoryForm } from "@/components/admin/category-form";
-import { isCloudinaryConfigured } from "@/lib/cloudinary";
+import { isBlobConfigured } from "@/lib/blob";
 
 export default async function AdminCategoriesPage() {
   const categories = await db.category.findMany({
@@ -22,7 +22,7 @@ export default async function AdminCategoriesPage() {
             productCount: c._count.products,
           }))}
         />
-        <CategoryForm cloudinaryConfigured={isCloudinaryConfigured()} />
+        <CategoryForm uploadEnabled={isBlobConfigured()} />
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { ProductForm } from "@/components/admin/product-form";
 import { DeleteProductButton } from "@/components/admin/delete-product-button";
-import { isCloudinaryConfigured } from "@/lib/cloudinary";
+import { isBlobConfigured } from "@/lib/blob";
 
 interface EditProductPageProps {
   params: Promise<{ id: string }>;
@@ -31,7 +31,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
         <ProductForm
           productId={product.id}
           categories={categories}
-          cloudinaryConfigured={isCloudinaryConfigured()}
+          uploadEnabled={isBlobConfigured()}
           defaultValues={{
             name: product.name,
             slug: product.slug,

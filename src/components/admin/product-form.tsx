@@ -32,14 +32,14 @@ interface ProductFormProps {
   categories: Category[];
   productId?: string;
   defaultValues?: Partial<AdminProductFormInput>;
-  cloudinaryConfigured?: boolean;
+  uploadEnabled?: boolean;
 }
 
 export function ProductForm({
   categories,
   productId,
   defaultValues,
-  cloudinaryConfigured = false,
+  uploadEnabled = false,
 }: ProductFormProps) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -186,7 +186,7 @@ export function ProductForm({
                 <ImageUploadInput
                   value={value}
                   onChange={onChange}
-                  cloudinaryConfigured={cloudinaryConfigured}
+                  uploadEnabled={uploadEnabled}
                 />
               )}
             />
